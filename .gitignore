@@ -1,0 +1,15 @@
+# Bağımlılıklar
+node_modules/
+
+# İmza anahtarları — ASLA GitHub'a koyma
+*.jks
+*.keystore
+keystore.properties
+
+# Yerel/derleme çıktıları
+local.properties
+.gradle/
+build/
+*.apk
+*.aab
+.idea/
