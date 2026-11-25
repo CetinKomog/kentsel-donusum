@@ -2225,8 +2225,9 @@ SONGS.karadeniz={bpm:168,root:293.66,sc:[0,2,3,5,7,9,10],mel:[0,2,3,4,3,2,0,-1,4
 SONGS.dogu={bpm:96,root:246.94,sc:[0,2,3,5,7,8,10],mel:[4,-1,3,-1,2,-1,-1,-1,0,-1,2,3,4,-1,-1,-1,5,-1,4,3,2,-1,3,-1,0,-1,-1,-1,0,-1,-1,-1],bass:[0,5,3,4],dum:[1,0,0,1,0,0,1,0],tek:[0,0,1,0,0,1,0,0],lead:'triangle'};
 SONGS.guneydogu={bpm:118,root:220,sc:[0,1,4,5,7,8,10],mel:[0,1,2,-1,2,1,0,-1,4,-1,3,2,1,-1,2,-1,4,5,6,-1,5,4,3,-1,2,1,2,-1,0,-1,-1,-1],bass:[0,3,4,0],dum:[1,0,0,1,0,1,0,0],tek:[0,1,1,0,1,0,1,1],lead:'sawtooth'};
 NEW_CITIES.forEach(C=>{SONGS[C.key]=SONGS[REGION_SONG[REGION_OF[C.key]]];});
-const STARTERS=['istanbul','izmir','adana','ankara','trabzon','erzurum','gaziantep'];
-const TIER={istanbul:0,izmir:1,adana:1,ankara:1,trabzon:1,erzurum:1,gaziantep:1,bursa:2,denizli:2,antalya:2,konya:2,rize:2,van:2,sanliurfa:2,edirne:4,bodrum:4,mersin:4,corum:4,samsun:4,kars:4,diyarbakir:4};
+const STARTERS=['istanbul','izmir','adana','ankara','trabzon','erzurum','diyarbakir'];
+{const ix=k=>CITIES.findIndex(x=>x.key===k);CITIES[ix('gaziantep')].prev=ix('diyarbakir');CITIES[ix('sanliurfa')].prev=ix('gaziantep');}
+const TIER={istanbul:0,izmir:1,adana:1,ankara:1,trabzon:1,erzurum:1,gaziantep:2,bursa:2,denizli:2,antalya:2,konya:2,rize:2,van:2,sanliurfa:4,edirne:4,bodrum:4,mersin:4,corum:4,samsun:4,kars:4,diyarbakir:1};
 const cityPrev=c=>CITIES[c].prev!=null?CITIES[c].prev:c-1;
 const bossName=c=>CITIES[c].boss||BOSSES[c];
 const bossLineOf=c=>CITIES[c].bossLine&&c>=4?CITIES[c].bossLine:BOSS_LINES[c];
@@ -2271,6 +2272,44 @@ function cityPerk(dt){const k=cityKeyNow();if(!k||cine||winT)return;const n=floo
     if(perkT<=0&&horse.x>=W*.15){perkT=Math.max(1.1,3.8-n*.14-(run.di||0)*.02);arrows.push({kind:'asker',x:horse.x+20,wy:groundWY()-30,vx:0,vy:0,hit:0,hp:2,spd:70+n*3});sBow();}}
   if(k==='edirne'&&n>=3&&!hazBusy()){perkT-=dt;if(perkT<=0&&!arrows.some(a=>a.kind==='pehlivan')){perkT=6+Math.random()*4-Math.min(2.5,(run.di||0)*.05);const dir=ch(.5)?1:-1;
       arrows.push({kind:'pehlivan',x:dir>0?-50:W+50,wy:groundWY(),dir,vx:0,vy:0,hit:0,hp:5,spd:62+(run.di||0)*.9});showBanner('PEHLİVAN GELİYOR!','Omuz atmadan 5 kere dokun!','#bc4749',1.6);babble('pehlivan','HAAYDİ ALLAH ALLAH!',true);tone(180,.4,'sawtooth',.08,-60);}}}
+function drawZabita(x,y,dir,sc){ctx.save();ctx.translate(x,y);ctx.scale(dir*(sc||1.5),sc||1.5);
+  const p=t*7,s=Math.sin(p),OL='#14182b',NV='#1f2d5c',NV2='#16214a',SK='#f0b27a',SK2='#c98a55';ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(1,16.6,12,2.5,0,0,7);ctx.fill();
+  const seg=(pts,w,col)=>{ctx.beginPath();ctx.moveTo(pts[0],pts[1]);for(let i=2;i<pts.length;i+=2)ctx.lineTo(pts[i],pts[i+1]);ctx.strokeStyle=OL;ctx.lineWidth=w+1.8;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke();};
+  // bacaklar + ayakkabı
+  [[-3.5,1,NV2],[3.5,0,NV]].forEach(([hx,bk,col])=>{seg([hx,1,hx+(bk?-1:1),14.5],5.6,col);ctx.fillStyle='#111';ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(hx+(bk?0:2)+1.5,15.6,4.2,1.9,0,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(hx+1.5,14.8,2,.7);});
+  // arka kol (ceza makbuzu)
+  seg([-8,-18,-12,-9,-8,-3],4.8,NV2);ctx.save();ctx.translate(-8,-4);ctx.rotate(-.25);ctx.fillStyle='#fff';ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.fillRect(-4,-6,8,10);ctx.strokeRect(-4,-6,8,10);ctx.fillStyle='#e63946';ctx.fillRect(-4,-6,8,2.2);ctx.strokeStyle='#9aa3bd';ctx.lineWidth=.6;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-2.6,-1.6+i*2);ctx.lineTo(2.6,-1.6+i*2);ctx.stroke();}ctx.restore();
+  ctx.fillStyle=SK;ctx.beginPath();ctx.arc(-8.5,-3.5,2.3,0,7);ctx.fill();
+  // gövde: lacivert ceket
+  const g=ctx.createLinearGradient(-10,0,10,0);g.addColorStop(0,NV2);g.addColorStop(.55,NV);g.addColorStop(1,NV2);ctx.fillStyle=g;ctx.strokeStyle=OL;ctx.lineWidth=1.3;
+  ctx.beginPath();ctx.moveTo(-8.5,2);ctx.lineTo(-10,-14);ctx.quadraticCurveTo(-10,-21,-4,-22.5);ctx.lineTo(5,-22.5);ctx.quadraticCurveTo(11,-21,10.5,-14);ctx.lineTo(9,2);ctx.closePath();ctx.fill();ctx.stroke();
+  // reflektif yelek şeritleri
+  ctx.fillStyle='#d8f53a';ctx.fillRect(-9.6,-9.5,19.6,3.2);ctx.fillStyle='#e9ecef';ctx.fillRect(-9.6,-8.6,19.6,1.2);
+  ctx.fillStyle='#d8f53a';ctx.fillRect(-6.5,-22,2.6,12.5);ctx.fillRect(4.4,-22,2.6,12.5);
+  // kemer + rozet + düğmeler
+  ctx.fillStyle='#111';ctx.fillRect(-9,-1.5,18.4,3);ctx.fillStyle='#c9a227';ctx.fillRect(-1.6,-1.6,3.4,3.2);
+  ctx.fillStyle='#ffd23f';ctx.strokeStyle='#8a6a00';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(-6.5,-17.5);ctx.lineTo(-4.4,-16.6);ctx.lineTo(-4.6,-14.3);ctx.lineTo(-6.5,-13.3);ctx.lineTo(-8.4,-14.3);ctx.lineTo(-8.6,-16.6);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#c9a227';[-17,-12.5,-4].forEach(yy=>{ctx.beginPath();ctx.arc(.6,yy,.9,0,7);ctx.fill();});
+  // boyun + kafa
+  ctx.fillStyle=SK2;ctx.fillRect(-1.5,-26,6,4.5);
+  const hg=ctx.createRadialGradient(1,-31,1,3,-29,8);hg.addColorStop(0,'#f6c08c');hg.addColorStop(1,SK2);ctx.fillStyle=hg;ctx.strokeStyle=OL;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(2.6,-29.5,6.2,6.8,0,0,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.ellipse(-2.6,-29,1.5,2.2,0,0,7);ctx.fill();
+  // göz, kaş (sert bakış), bıyık, düdük
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(5.8,-30.6,1.5,1.2,0,0,7);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(6.4,-30.5,.8,0,7);ctx.fill();
+  ctx.strokeStyle='#111';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(3.6,-33.2);ctx.lineTo(8.4,-32.2);ctx.stroke();
+  ctx.fillStyle='#2b1d12';ctx.beginPath();ctx.moveTo(3.4,-26.8);ctx.quadraticCurveTo(6.5,-28.4,9.6,-26.9);ctx.quadraticCurveTo(8.8,-25.4,6.5,-25.9);ctx.quadraticCurveTo(4.6,-25.3,3.4,-26.8);ctx.fill();
+  ctx.fillStyle='#c0c4cc';ctx.strokeStyle=OL;ctx.lineWidth=.8;rr(7.8,-26.2,4.6,2.4,1);ctx.fill();ctx.stroke();ctx.strokeStyle='#e63946';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(8,-24.5);ctx.quadraticCurveTo(3,-21,-1,-22);ctx.stroke();
+  // kasket
+  ctx.fillStyle=NV2;ctx.strokeStyle=OL;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(-4,-33.5);ctx.quadraticCurveTo(-4.5,-40.5,3,-40.8);ctx.quadraticCurveTo(10,-40.5,9.6,-34.5);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#e9ecef';ctx.fillRect(-3.8,-35.4,13.2,1.8);
+  ctx.fillStyle='#111';ctx.beginPath();ctx.moveTo(3,-34);ctx.quadraticCurveTo(10,-35,13.5,-32.4);ctx.quadraticCurveTo(9,-32.2,3,-32.8);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ffd23f';ctx.beginPath();ctx.arc(3.4,-37.6,1.6,0,7);ctx.fill();
+  // ön kol: "DUR!" eli havada
+  const a=s*1.2;seg([8,-19,15,-21+a,17,-29+a],4.8,NV);ctx.fillStyle=SK;ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(17.4,-31+a,2.6,3.4,.15,0,7);ctx.fill();ctx.stroke();
+  ctx.strokeStyle=SK2;ctx.lineWidth=.6;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(16.2+i*1.1,-33.6+a);ctx.lineTo(16.2+i*1.1,-31.6+a);ctx.stroke();}
+  ctx.restore();}
+
 function drawPehlivan(x,y,dir,hp){ctx.save();ctx.translate(x,y);ctx.scale(dir*1.5,1.5);
   const p=t*9,s=Math.sin(p),c=Math.cos(p),bob=Math.abs(s)*1.1;
   const OL='#3b1d0c',S1='#f0b27a',S2='#c97f42',S3='#94552a',KS='#141414';
