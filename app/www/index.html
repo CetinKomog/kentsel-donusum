@@ -91,11 +91,11 @@ function playClip(kind){const a=CLIPS[kind];if(!a||!a.length||muted||!settings.s
 /* ================= SES EFEKTLERİ ================= */
 let AC=null,master,musicGain,sfxGain,noiseBuf,muted=store.get('kd_mute',false),musicOn=false,nextNote=0,mstep=0;
 function audio(){
-  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:1;master.connect(AC.destination);
+  if(!AC){try{const _AC=window.AudioContext||window.webkitAudioContext;try{AC=new _AC({latencyHint:'playback'});}catch(_){AC=new _AC();}master=AC.createGain();master.gain.value=muted?0:1;const lim=AC.createDynamicsCompressor();lim.threshold.value=-8;lim.knee.value=6;lim.ratio.value=12;lim.attack.value=.003;lim.release.value=.15;master.connect(lim);lim.connect(AC.destination);
     musicGain=AC.createGain();musicGain.gain.value=.5;musicGain.connect(master);sfxGain=AC.createGain();sfxGain.connect(master);
     noiseBuf=AC.createBuffer(1,AC.sampleRate*.5,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}catch(e){AC=null;}}
   if(AC&&AC.state==='suspended')AC.resume();
-  if(AC&&!musicOn){musicOn=true;nextNote=AC.currentTime+.1;setInterval(scheduler,25);applySettings();}
+  if(AC&&!musicOn){musicOn=true;nextNote=AC.currentTime+.1;setInterval(scheduler,40);applySettings();}
 }
 function duck(on){if(musicGain&&AC)musicGain.gain.setTargetAtTime(!settings.music?0:on?.12:.5,AC.currentTime,.1);}
 
@@ -113,8 +113,8 @@ function babble(kind,text,force){if(!AC||muted||!settings.sfx)return;const now=A
   babbleUntil=tt;}
 function sGameOver(){tone(392,.28,'triangle',.12,-20);tone(370,.28,'triangle',.12,-20,.3);tone(349,.28,'triangle',.12,-20,.6);tone(330,.9,'triangle',.12,-60,.9);babble('amca','Olmadı be usta…',true);}
 function sCheer(){for(let i=0;i<3;i++)setTimeout(()=>babble(['teyze','amca','cocuk'][i],'Yaşasın!!',true),i*160);}
-function tone(f,d,type='sine',vol=.2,slide=0,delay=0){if(!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+d);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(sfxGain);o.start(t);o.stop(t+d+.02);}
-function noise(d,type,freq,vol,delay=0){if(!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(sfxGain);s.start(t);s.stop(t+d+.02);}
+function tone(f,d,type='sine',vol=.2,slide=0,delay=0){if(!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(sfxGain);o.start(t);o.stop(t+d+.02);}
+function noise(d,type,freq,vol,delay=0){if(!AC)return;const t=AC.currentTime+delay,s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;const g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(sfxGain);s.start(t);s.stop(t+d+.02);}
 const sThud=()=>{tone(120,.2,'triangle',.4,-70);tone(60,.25,'sine',.3);};
 const PENT=[0,2,4,7,9];
 function sPerfect(c){if(!AC)return;tone(90,.15,'sine',.25,-30);const k=Math.max(0,Math.min(c,10)-1),semi=PENT[k%5]+12*Math.floor(k/5),f=523.25*Math.pow(2,semi/12),t0=AC.currentTime;
@@ -158,13 +158,13 @@ let song=SONGS.endless,pendingSong=null;
 let songStart=0;function setSong(k){const s=SONGS[k]||SONGS.endless;pendingSong=s!==song?s:null;}
 const sfreq=(s,deg,oct=0)=>s.root*Math.pow(2,(s.sc[((deg%7)+7)%7]+12*Math.floor(deg/7)+12*oct)/12);
 function note(f,t,d,type,vol){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+d);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+d+.02);}
-function hit(t,hp,vol,d){const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=hp;const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(musicGain);s.start(t);s.stop(t+d+.02);}
+function hit(t,hp,vol,d){const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=hp;const g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(musicGain);s.start(t);s.stop(t+d+.02);}
 function dum(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(55,t+.18);g.gain.setValueAtTime(.45,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+.25);}
 function stepDur(){return 60/(song.bpm*(fever?1.2:1))/2;}
 /* Adana: karanlık trap ritmi (808 bas, hi-hat, zurna benzeri ana tema) – tamamen özgün */
 let distCurve=null;function distNode(){if(!distCurve){const n=1024;distCurve=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;distCurve[i]=Math.tanh(x*3);}}const w=AC.createWaveShaper();w.curve=distCurve;return w;}
 function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);g.gain.setValueAtTime(.75,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+.32);}
-function nhit(t,type,fr,vol,d){const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=fr;const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(musicGain);s.start(t);s.stop(t+d+.02);}
+function nhit(t,type,fr,vol,d){const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=fr;const g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(musicGain);s.start(t);s.stop(t+d+.02);}
 function clap(t){for(let k=0;k<3;k++)nhit(t+k*.011,'bandpass',1300,.32,.14);}
 function b808(f,t,d){const o=AC.createOscillator(),g=AC.createGain(),w=distNode();o.frequency.setValueAtTime(f*1.6,t);o.frequency.exponentialRampToValueAtTime(f,t+.07);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.3,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(w);w.connect(g);g.connect(musicGain);o.start(t);o.stop(t+d+.02);}
 function zurna(f,t,d){const o=AC.createOscillator(),bp=AC.createBiquadFilter(),g=AC.createGain(),lfo=AC.createOscillator(),lg=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(f*.97,t);o.frequency.linearRampToValueAtTime(f,t+.05);lfo.frequency.value=6.5;lg.gain.value=f*.013;lfo.connect(lg);lg.connect(o.frequency);bp.type='bandpass';bp.frequency.value=1500;bp.Q.value=1.3;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.03);g.gain.setValueAtTime(.12,t+d*.75);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(bp);bp.connect(g);g.connect(musicGain);o.start(t);lfo.start(t);o.stop(t+d+.02);lfo.stop(t+d+.02);}
@@ -192,7 +192,7 @@ function scheduleStep(s,t){
   if(S.tek[b])hit(t,2800,.15,.06);
   if((fever||floors.length>=15)&&!S.tek[b]&&!S.dum[b])hit(t,6000,.05,.03);
 }
-function scheduler(){if(!AC)return;while(nextNote<AC.currentTime+.12){scheduleStep(mstep,nextNote);nextNote+=stepDur();mstep++;}}
+function scheduler(){if(!AC)return;if(nextNote<AC.currentTime)nextNote=AC.currentTime+.05;while(nextNote<AC.currentTime+.35){scheduleStep(mstep,nextNote);nextNote+=stepDur();mstep++;}}
 function say(){} /* Replikleri ileride Çetin seslendirecek; şimdilik sadece yazı */
 
 /* ================= ŞEHİRLER & BÖLÜMLER ================= */
