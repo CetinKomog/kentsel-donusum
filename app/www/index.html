@@ -235,7 +235,7 @@ function levelCfg(c,h,p){
 }
 function levelCfgT(c,h,p){const cfg=levelCfg(c,h,p),R=mulberry(cfg.idx*104729+7),pool=['ekspres','hassas','tadilat','sis','noir','neon','yesilcam','saray','demirperde'];
   const hi=c*3+h,eraP=1+((hi+1)%2),ERA_ORDER=['noir','yesilcam','gokturk','neon','saray','demirperde'],FILL=['hassas','tadilat','sis','normal','ekspres'];
-  let type;if(p===3)type='patron';else if(c===0&&h===0&&p===0)type='normal';else if(p===eraP)type=ERA_ORDER[(hi+(c>=4?c:0))%6];else type=FILL[(hi*2+(p<eraP?p:p-1))%5];
+  let type;if(p===3)type='patron';else if(h===0&&p===0&&(c===0||STARTERS.includes(CITIES[c].key)))type='normal';else if(CITIES[c].key==='diyarbakir'&&h===1&&p===2)type='hassas';else if(p===eraP)type=ERA_ORDER[(hi+(c>=4?c:0))%6];else type=FILL[(hi*2+(p<eraP?p:p-1))%5];
   return applyType(cfg,type);}
 /* ================= PARA, DÜKKÂN, GÜÇLENDİRİCİ, GÜNLÜK ================= */
 let coins=store.get('kd_coins',150);function addCoins(n){coins=Math.max(0,coins+n);store.set('kd_coins',coins);}
