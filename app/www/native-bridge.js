@@ -60,6 +60,10 @@
         try {
           const info = await AdMob.requestConsentInfo();
           if (info.isConsentFormAvailable && info.status === 'REQUIRED') await AdMob.showConsentForm();
+          // Oyuncu izni sonradan değiştirebilsin (Ayarlar'daki "Reklam izni" butonu)
+          const again = await AdMob.requestConsentInfo().catch(() => info);
+          const need = again.privacyOptionsRequirementStatus === 'REQUIRED' || (again.isConsentFormAvailable && again.status !== 'NOT_REQUIRED');
+          if (need) window.KD_privacy = { open: () => (AdMob.showPrivacyOptionsForm ? AdMob.showPrivacyOptionsForm() : AdMob.showConsentForm()).catch(() => {}) };
         } catch (e) {}
         ready = true;
       } catch (e) { console.log('AdMob init hatası', e); }
