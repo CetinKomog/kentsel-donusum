@@ -1,21 +1,21 @@
 # Kentsel Dönüşüm 🏗️
 
-Vinçten sallanan katları üst üste dikip mahalleyi dönüştürdüğün, bol replikli bir mobil kule oyunu.
+Vinçle kat dikip gecekonduları dönüştürdüğün, Türk mizahıyla dolu mobil kule oyunu.
+7 bölge · 21 şehir · 252 bölüm · dönem bölümleri · şehre özel mekanikler.
 
-**Oyna:** https://claude.ai/artifact/3wRcUog87mqmLB3A4yXxZQ
+## Klasörler
+| Klasör | Ne var |
+|---|---|
+| `index.html` | Oyunun tamamı (tek dosya, tarayıcıda açılır) |
+| `app/` | Android uygulaması (Capacitor) + AdMob + Google Play satın alma köprüsü |
+| `store/` | Mağaza ikonu, kapak görseli, ekran görüntüleri ve mağaza metinleri |
+| `privacy/` | Gizlilik politikası sayfası |
+| `KURULUM.md` | Google Play'e çıkış için adım adım rehber |
 
-## Modlar
-- **Şehirler:** İstanbul, Ankara, İzmir, Adana — her şehirde 3 mahalle, her mahallede 4 gecekondu (toplam 48 bölüm). Süre sınırı, görevler ve 1–5 yıldız.
-- **Sonsuz Mod:** Tek can; gündüz → akşam → gece → uzay.
+## Hızlı başlangıç
+- Tarayıcıda oynamak: `index.html` dosyasını aç.
+- Uygulama yapmak: `KURULUM.md`.
 
-## Özellikler
-- Özel katlar: altın, cam, bomba, yanan kat, gecekondu (dışarı at!)
-- Perfect serisi (x2, x3…) ve "Harika" modu
-- Rastgele olaylar: kuşlar, hırsız, elektrik kesintisi, UFO, düşük yerçekimi
-- Şehre özel olaylar: İstanbul (deprem, lodos), Ankara (zabıta, imza eksik, ayaz), İzmir (martı), Adana (kavurucu sıcak, keko)
-- Şehir silüetleri, şehre özel müzikler, skor kartı paylaşma
-
-## Teknik
-Tek dosya: `index.html` (HTML5 Canvas + Web Audio, harici kütüphane yok). Tarayıcıda açman yeterli.
-
-Sonraki adım: Capacitor ile Android/iOS uygulamasına çevirmek.
+## Lisanslar
+- Baloo 2 fontu: SIL Open Font License 1.1 (`app/www/fonts/OFL-LICENSE.txt`)
+- Oyundaki tüm müzik ve sesler kod ile üretilir, harici ses dosyası yoktur.

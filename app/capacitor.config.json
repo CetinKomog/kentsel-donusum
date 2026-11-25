@@ -1,0 +1,10 @@
+{
+  "appId": "com.cetin.kentseldonusum",
+  "appName": "Kentsel Dönüşüm",
+  "webDir": "www",
+  "android": { "backgroundColor": "#ff8a2e" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#ff8a2e", "showSpinner": false },
+    "StatusBar": { "overlaysWebView": true, "style": "DARK" }
+  }
+}
