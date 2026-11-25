@@ -135,6 +135,8 @@ const sWin=()=>{[523,659,784,1046,1318].forEach((f,i)=>tone(f,.4,'triangle',.11,
 const sFever=()=>{tone(300,.6,'sawtooth',.05,900);tone(600,.6,'square',.03,1200,.1);};
 const sPop=()=>tone(700,.08,'sine',.1,300);
 function vib(p){if(!settings.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+['pointerup','touchend','click','keydown'].forEach(e=>window.addEventListener(e,()=>{try{if(!AC)audio();else if(AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}},{passive:true}));
+document.addEventListener('visibilitychange',()=>{try{if(!document.hidden&&AC&&AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}});
 function toggleMute(){muted=!muted;store.set('kd_mute',muted);if(master)master.gain.value=muted?0:1;}
 
 /* ================= MÜZİK: her şehrin kendi havası ================= */
@@ -2447,7 +2449,7 @@ drawArrows=function(){for(const a of arrows){const k=a.kind||'arrow',sy=a.wy-cam
     if(a.hp<5){ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(-r*.6,-r*.2);ctx.lineTo(0,-r*.8);ctx.lineTo(r*.3,0);ctx.closePath();ctx.fill();}ctx.restore();txt('x'+a.hp,a.x,sy-36,14,{fill:'#ffd23f'});}
   else{ctx.save();ctx.translate(a.x,sy);ctx.rotate(Math.atan2(a.vy,a.vx));ctx.strokeStyle='#5b3a1e';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-22,0);ctx.lineTo(14,0);ctx.stroke();ctx.fillStyle='#adb5bd';ctx.beginPath();ctx.moveTo(20,0);ctx.lineTo(12,-4.5);ctx.lineTo(12,4.5);ctx.fill();ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(-22,0);ctx.lineTo(-28,-5);ctx.lineTo(-17,0);ctx.lineTo(-28,5);ctx.fill();ctx.restore();}
   ctx.globalAlpha=1;if(k!=='baklava'&&k!=='pehlivan'&&k!=='vapur'){ctx.strokeStyle='rgba(255,210,63,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(a.x,sy,(k==='karpuz'?34:18)+Math.sin(t*14)*2,0,7);ctx.stroke();}}};
-{const _dA=drawArrows;drawArrows=function(){_dA();if(typeof ev!=='undefined'&&ev&&ev.id==='zabita'&&freezeT>0){const bx=floors.length?floorX(0):W/2;drawZabita(Math.min(W-30,bx+FW*.9),groundWY()-camY-24,-1,1.5);}};}
+{const _dC=drawCityFX;drawCityFX=function(){_dC();if(ev&&ev.id==='zabita'&&freezeT>0){const n=floors.length,bx=n?floorX(n-1):W/2,ry=n?-n*FH-camY:groundWY()-camY;drawZabita(clamp(bx+FW*.22,30,W-30),clamp(ry-24,90,H-60),-1,1.5);}};}
 arrowTap=function(x,y){for(const a of arrows){const k=a.kind||'arrow';const ay=a.wy-camY-(k==='pehlivan'?40:0);if(!a.hit&&Math.hypot(x-a.x,y-ay)<(k==='karpuz'?48:k==='pehlivan'||k==='vapur'?60:40)){
     if(k==='vapur'){a.hit=1;addScore(30,a.wy);popup('Vapura el salladın! +30',a.wy-70,'#1d3557',18,1);tone(880,.15,'triangle',.06);return true;}
     if(k==='yaprak'){a.hit=1;addCoins(1);popup('+1 çay 🍃',a.wy-20,'#38b000',16,.7);sGold();return true;}

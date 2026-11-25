@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kentsel Dönüşüm</string>
+    <string name="title_activity_main">Kentsel Dönüşüm</string>
+    <string name="package_name">com.cetin.kentseldonusum</string>
+    <string name="custom_url_scheme">com.cetin.kentseldonusum</string>
+</resources>
