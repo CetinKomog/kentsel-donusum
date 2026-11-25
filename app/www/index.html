@@ -137,6 +137,7 @@ const sPop=()=>tone(700,.08,'sine',.1,300);
 function vib(p){if(!settings.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 ['pointerup','touchend','click','keydown'].forEach(e=>window.addEventListener(e,()=>{try{if(!AC)audio();else if(AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}},{passive:true}));
 document.addEventListener('visibilitychange',()=>{try{if(!document.hidden&&AC&&AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}});
+window.addEventListener('load',()=>{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())setTimeout(()=>{try{audio();}catch(_){}},300);});
 function toggleMute(){muted=!muted;store.set('kd_mute',muted);if(master)master.gain.value=muted?0:1;}
 
 /* ================= MÜZİK: her şehrin kendi havası ================= */
