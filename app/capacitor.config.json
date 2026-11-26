@@ -3,7 +3,8 @@
   "appName": "Kentsel Dönüşüm",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#14162b"
+    "backgroundColor": "#14162b",
+    "adjustMarginsForEdgeToEdge": "auto"
   },
   "plugins": {
     "SplashScreen": {
