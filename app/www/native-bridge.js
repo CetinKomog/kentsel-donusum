@@ -41,7 +41,8 @@
       } catch (e) {}
     });
     // uygulama arka plana gidince oyunu duraklat
-    P.App.addListener('pause', () => { try { if (scene === 'play') paused = true; } catch (e) {} });
+    P.App.addListener('pause', () => { try { if (scene === 'play') paused = true; if (AC && AC.state === 'running') AC.suspend(); } catch (e) {} });
+    P.App.addListener('resume', () => { try { if (AC && AC.state !== 'running') AC.resume(); } catch (e) {} });
   }
   if (P.StatusBar) { P.StatusBar.hide().catch(() => {}); }
   if (P.SplashScreen) { setTimeout(() => P.SplashScreen.hide().catch(() => {}), 600); }

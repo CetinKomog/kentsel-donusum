@@ -136,7 +136,7 @@ const sFever=()=>{tone(300,.6,'sawtooth',.05,900);tone(600,.6,'square',.03,1200,
 const sPop=()=>tone(700,.08,'sine',.1,300);
 function vib(p){if(!settings.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 ['pointerup','touchend','click','keydown'].forEach(e=>window.addEventListener(e,()=>{try{if(!AC)audio();else if(AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}},{passive:true}));
-try{document.addEventListener('visibilitychange',()=>{try{if(!document.hidden&&AC&&AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}});}catch(_){}
+try{document.addEventListener('visibilitychange',()=>{try{if(!AC)return;if(document.hidden){if(AC.state==='running')AC.suspend().catch(()=>{});}else if(AC.state!=='running')AC.resume().catch(()=>{});}catch(_){}});}catch(_){}
 window.addEventListener('load',()=>{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())setTimeout(()=>{try{audio();}catch(_){}},300);});
 function toggleMute(){muted=!muted;store.set('kd_mute',muted);if(master)master.gain.value=muted?0:1;}
 
@@ -192,7 +192,7 @@ function scheduleStep(s,t){
   if(S.tek[b])hit(t,2800,.15,.06);
   if((fever||floors.length>=15)&&!S.tek[b]&&!S.dum[b])hit(t,6000,.05,.03);
 }
-function scheduler(){if(!AC)return;if(nextNote<AC.currentTime)nextNote=AC.currentTime+.05;while(nextNote<AC.currentTime+.35){scheduleStep(mstep,nextNote);nextNote+=stepDur();mstep++;}}
+function scheduler(){if(!AC||AC.state!=='running'||(typeof document!=='undefined'&&document.hidden))return;if(nextNote<AC.currentTime)nextNote=AC.currentTime+.05;while(nextNote<AC.currentTime+.35){scheduleStep(mstep,nextNote);nextNote+=stepDur();mstep++;}}
 function say(){} /* Replikleri ileride Çetin seslendirecek; şimdilik sadece yazı */
 
 /* ================= ŞEHİRLER & BÖLÜMLER ================= */
@@ -2463,7 +2463,7 @@ arrowTap=function(x,y){for(const a of arrows){if(a.ext)continue;const k=a.kind||
 HAZ_K.push('karpuzT','turist','lazHook');
 Object.assign(PERK_INFO,{diyarbakir:'🍉 Kadir kamyonetten karpuz fırlatır',antalya:'🤳 Turistler tırmanıp selfie çeker',bursa:'🚡 Teleferikten bedava kat kap',trabzon:'🎶 Horon ve 🏗️ Laz müteahhit'});
 const X={truck:null,tCD:6,gond:null,gCD:7,horonT:0,hCD:9,beat:0,pulse:0,lazCD:12,tourCD:7,laz:0};
-{const _rp=resetPerk;resetPerk=function(){_rp();Object.assign(X,{truck:null,tCD:5,gond:null,gCD:6,horonT:0,hCD:8,beat:0,pulse:0,lazCD:11,tourCD:6,laz:0});};}
+{const _rp=resetPerk;resetPerk=function(){_rp();Object.assign(X,{truck:null,tCD:5,gond:null,gCD:6,horonT:0,hCD:4+Math.random()*3,beat:0,pulse:0,lazCD:4,tourCD:6,laz:0});};}
 function throwMelon(T){const n=floors.length;if(!n)return;const tx=floorX(n-1),ty=-n*FH+FH*.3,sx=T.x+T.dir*22,sy=groundWY()-52,Tf=Math.max(1.25,1.95-(run.di||0)*.012),g=520;
   arrows.push({kind:'karpuzT',ext:1,x:sx,wy:sy,vx:(tx-sx)/Tf,vy:(ty-sy-.5*g*Tf*Tf)/Tf,g,life:Tf,hit:0,hp:1,rot:0,gold:Math.random()<.12});tone(220,.25,'triangle',.08,180);}
 function newPerks(dt){const k=cityKeyNow();if(!k||cine||winT||scene!=='play')return;const n=floors.length,di=run.di||0;
@@ -2478,8 +2478,9 @@ function newPerks(dt){const k=cityKeyNow();if(!k||cine||winT||scene!=='play')ret
     else{const G=X.gond;G.x+=G.dir*(70+di*.6)*dt;if(G.x<-90||G.x>W+90){X.gond=null;X.gCD=9+Math.random()*3;}}}
   if(k==='trabzon'&&n>=2){
     if(X.horonT>0){X.horonT-=dt;X.beat+=dt;if(X.beat>=.5){X.beat-=.5;tone(90,.12,'sine',.25);noise(.08,'lowpass',400,.15);shake=Math.max(shake,2.5);X.pulse=1;}X.pulse=Math.max(0,X.pulse-dt*4);}
-    else if(!hazBusy()&&!X.laz){X.hCD-=dt;if(X.hCD<=0){X.hCD=13+Math.random()*4;X.horonT=6;X.beat=0;showBanner('HORON TEPİLİYOR!','Davulun vuruşunda kat koy: bonus!','#1d3557',1.4);babble('amca','Hadi uşaklar horona!',true);}}
-    if(!X.laz&&X.horonT<=0&&n>=4&&!hazBusy()){X.lazCD-=dt;if(X.lazCD<=0){X.lazCD=14+Math.random()*4;X.laz=1;arrows.push({kind:'lazHook',ext:1,side:ch(.5)?1:-1,x:0,wy:0,prog:0,hit:0,hp:3,dur:Math.max(3.4,5.2-di*.03)});showBanner('LAZ MÜTEAHHİT GELDİ!','Kancaya 3 kere dokun, halatı kopar!','#264653',1.6);babble('patron','Uşağum bu arsa benum!',true);}}}
+    else if(!hazBusy()&&!X.laz){X.hCD-=dt;if(X.hCD<=0){X.hCD=8+Math.random()*4;
+      if(n>=3&&ch(.5)){X.laz=1;arrows.push({kind:'lazHook',ext:1,side:ch(.5)?1:-1,x:0,wy:0,prog:0,hit:0,hp:3,dur:Math.max(3.4,5.2-di*.03)});showBanner('LAZ MÜTEAHHİT GELDİ!','Kancaya 3 kere dokun, halatı kopar!','#264653',1.6);babble('patron','Uşağum bu arsa benum!',true);}
+      else{X.horonT=6;X.beat=0;showBanner('HORON TEPİLİYOR!','Davulun vuruşunda kat koy: bonus!','#1d3557',1.4);babble('amca','Hadi uşaklar horona!',true);}}}}
   // ext oklar
   for(const a of arrows){if(a.hit||!a.ext)continue;const nn=floors.length;
     if(a.kind==='karpuzT'){a.life-=dt;a.x+=a.vx*dt;a.vy+=a.g*dt;a.wy+=a.vy*dt;a.rot+=dt*5;if(a.life<=0){a.hit=2;burst(a.x,a.wy,12,['#e63946','#2d6a4f','#fff'],240);if(!knockTop('Karpuz isabet etti, kat gitti!',1))swayAmp+=FW*.12;}}
