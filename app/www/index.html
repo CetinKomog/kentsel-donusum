@@ -497,9 +497,12 @@ function spawnBirds(){const k=run&&run.mode==='city'?CITIES[run.c].key:null,di=(
   const cols=coast?['#f8f9fa','#e9ecef','#dee2e6']:crow?['#212529','#343a40','#2b2d42']:['#6c757d','#8d99ae','#5c677d'];
   birds=us.map((u,i)=>({u,st:'in',x:i%2?W+30:-30,y:CRANE_Y+60+Math.random()*140,vx:0,vy:0,c:rnd(cols),ph:Math.random()*6,delay:i*.35,face:i%2?-1:1}));}
 let hazCalm=0;const HAZ_K=['karpuz','karpuzF','pehlivan'];
-function hazTick(dt){const busy=ev||birds.length||(typeof X!=='undefined'&&(X.truck||X.horonT>0||X.gond))||fogEv||PK.boostT>0||arrows.some(a=>a.kind==='vapur')||PK.pushT>0||PK.tipiT>0||PK.steamT>0||arrows.some(a=>HAZ_K.includes(a.kind));if(busy)hazCalm=Math.max(hazCalm,7);else hazCalm=Math.max(0,hazCalm-dt);}
-const hazBusy=()=>hazCalm>0;
-function birdPerk(dt){const k=cityKeyNow();if(!k||ev||hazBusy()||cine||winT||floors.length<3)return;PK.birdT=(PK.birdT==null?8:PK.birdT)-dt;if(PK.birdT<=0){PK.birdT=(COAST.includes(k)?10:CROW.includes(k)?13:18)+Math.random()*5;if(!birds.length)startEvent('kuslar');}}
+function hazCount(){const XX=typeof X!=='undefined'?X:{};let c=0;if(ev)c++;if(birds.length)c++;if(XX.truck)c++;if(XX.horonT>0)c++;if(XX.gond)c++;if(XX.laz)c++;if(fogEv)c++;if(PK.boostT>0)c++;if(PK.pushT>0)c++;if(PK.tipiT>0)c++;if(PK.steamT>0)c++;
+  const ks=new Set();for(const a of arrows){if(a.hit)continue;if(a.kind==='vapur'||HAZ_K.includes(a.kind))ks.add(a.kind==='lazHook'?'':a.kind);}ks.delete('');return c+ks.size;}
+let hazN=0;
+function hazTick(dt){hazN=hazCount();if(hazN>=2)hazCalm=Math.max(hazCalm,2.5);else hazCalm=Math.max(0,hazCalm-dt);}
+const hazBusy=()=>hazN>=2||hazCalm>0;
+function birdPerk(dt){const k=cityKeyNow();if(!k||ev||birds.length||hazBusy()||cine||winT||floors.length<3)return;PK.birdT=(PK.birdT==null?8:PK.birdT)-dt;if(PK.birdT<=0){PK.birdT=(COAST.includes(k)?10:CROW.includes(k)?13:18)+Math.random()*5;if(!birds.length)startEvent('kuslar');}}
 function updateBirds(dt){
   for(const b of birds){
     if(b.st==='in'){if(b.delay>0){b.delay-=dt;continue;}const r=ropePt(b.u),dx=r.x-b.x,dy=r.y-7-b.y,d=Math.hypot(dx,dy),sp=300*dt;b.face=dx>=0?1:-1;
@@ -2272,7 +2275,7 @@ function groundWY(){return camY+Math.min(H-112,-camY);}
 function cityPerk(dt){const k=cityKeyNow();if(!k||cine||winT)return;const n=floors.length;
   if(k==='corum'){if(!horse)horse={x:-90,t:0};horse.t+=dt;horse.x=Math.min(W*.16,horse.x+dt*160);if(n<1)return;perkT-=dt;
     if(perkT<=0&&horse.x>=W*.15){perkT=Math.max(2.4,5.2-n*.12-(run.di||0)*.02);arrows.push({kind:'asker',x:horse.x+20,wy:-30,vx:0,vy:0,hit:0,hp:2,spd:Math.min(150,55+n*5+(run.di||0)*.3)});sBow();}}
-  if(k==='edirne'&&n>=3&&!hazBusy()){perkT-=dt;if(perkT<=0&&!arrows.some(a=>a.kind==='pehlivan')){perkT=6+Math.random()*4-Math.min(2.5,(run.di||0)*.05);const dir=ch(.5)?1:-1;
+  if(k==='edirne'&&n>=3&&!hazBusy()&&!arrows.some(a=>a.kind==='pehlivan'&&!a.hit)){perkT-=dt;if(perkT<=0&&!arrows.some(a=>a.kind==='pehlivan')){perkT=6+Math.random()*4-Math.min(2.5,(run.di||0)*.05);const dir=ch(.5)?1:-1;
       arrows.push({kind:'pehlivan',x:dir>0?-50:W+50,wy:groundWY(),dir,vx:0,vy:0,hit:0,hp:5,spd:40+(run.di||0)*.45});showBanner('PEHLİVAN GELİYOR!','Omuz atmadan 5 kere dokun!','#bc4749',1.6);babble('pehlivan','HAAYDİ ALLAH ALLAH!',true);tone(180,.4,'sawtooth',.08,-60);}}}
 function drawZabita(x,y,dir,sc){ctx.save();ctx.translate(x,y);ctx.scale(dir*(sc||1.5),sc||1.5);
   const p=t*7,s=Math.sin(p),OL='#14182b',NV='#1f2d5c',NV2='#16214a',SK='#f0b27a',SK2='#c98a55';ctx.lineJoin='round';ctx.lineCap='round';
@@ -2372,7 +2375,7 @@ function perkTick(dt){const k=cityKeyNow();if(!k||cine||winT)return;const n=floo
   if(cur&&cur!==PK.lastCur){PK.lastCur=cur;if(cur.special!=='shack'){const r=Math.random();
     if(k==='bodrum'&&r<.25)cur.rez=1;if(k==='antalya'&&r<.22)cur.pool=1;if(k==='konya'&&r<.25)cur.eco=1;if(k==='van'&&r<.25)cur.cat=1;if(k==='gaziantep'&&n%10===9)cur.bak=1;}}
   const ready=!falling&&nextIn<=0;
-  if(k==='istanbul'&&n>=2&&!hazBusy()){perkT-=dt;if(perkT<=0){perkT=9+Math.random()*4;const d=ch(.5)?1:-1;arrows.push({kind:'vapur',x:d>0?-90:W+90,wy:groundWY()-40,dir:d,hit:0,hp:1});sHorn();shake=9;swayAmp+=FW*.07;}}
+  if(k==='istanbul'&&n>=2&&!hazBusy()&&!arrows.some(a=>a.kind==='vapur'&&!a.hit)){perkT-=dt;if(perkT<=0){perkT=9+Math.random()*4;const d=ch(.5)?1:-1;arrows.push({kind:'vapur',x:d>0?-90:W+90,wy:groundWY()-40,dir:d,hit:0,hp:1});sHorn();shake=9;swayAmp+=FW*.07;}}
   if(k==='bursa'&&n>=2){if(PK.steamT>0){PK.steamT-=dt;if(ch(.5))parts.push({x:Math.random()*W,y:camY+H-60,vx:(Math.random()-.5)*20,vy:-70-Math.random()*60,life:2.2,max:2.2,c:'rgba(255,255,255,.55)',sz:10+Math.random()*14,type:'puff',g:0});}
     else if(!hazBusy()){perkT-=dt;if(perkT<=0){perkT=8+Math.random()*3;PK.steamT=3.5;popup('BUHAR ÇIKTI! Katlar kayar',camY+H*.4,'#adb5bd',20,1.2);noise(1.5,'highpass',1800,.08);}}}
   if((k==='izmir'||k==='adana')&&n>=3&&!ev&&!hazBusy()){perkT-=dt;if(perkT<=0){perkT=k==='adana'?7+Math.random()*3:6+Math.random()*3;startEvent(k==='izmir'?'marti':'hirsiz');}}
@@ -2466,19 +2469,19 @@ const X={truck:null,tCD:6,gond:null,gCD:7,horonT:0,hCD:9,beat:0,pulse:0,lazCD:12
 {const _rp=resetPerk;resetPerk=function(){_rp();Object.assign(X,{truck:null,tCD:5,gond:null,gCD:6,horonT:0,hCD:4+Math.random()*3,beat:0,pulse:0,lazCD:4,tourCD:6,laz:0});};}
 function throwMelon(T){const n=floors.length;if(!n)return;const tx=floorX(n-1),ty=-n*FH+FH*.3,sx=T.x+T.dir*22,sy=groundWY()-52,Tf=Math.max(1.25,1.95-(run.di||0)*.012),g=520;
   arrows.push({kind:'karpuzT',ext:1,x:sx,wy:sy,vx:(tx-sx)/Tf,vy:(ty-sy-.5*g*Tf*Tf)/Tf,g,life:Tf,hit:0,hp:1,rot:0,gold:Math.random()<.12});tone(220,.25,'triangle',.08,180);}
-function newPerks(dt){const k=cityKeyNow();if(!k||cine||winT||scene!=='play')return;const n=floors.length,di=run.di||0;
+function newPerks(dt){const k=cityKeyNow();if(!k||cine||winT||scene!=='play')return;const n=floors.length,di=run.di||0;X.calm=Math.max(0,(X.calm||0)-dt);const myBusy=()=>X.calm>0||hazN>=2;
   if(k==='diyarbakir'){
-    if(!X.truck){if(n>=2&&!hazBusy()){X.tCD-=dt;if(X.tCD<=0){const d=ch(.5)?1:-1;X.truck={x:d>0?-90:W+90,dir:d,st:'in',left:2+(di>=20?1:0),cd:.7};showBanner('KARPUZCU KADİR GELDİ!','Karpuzlar havadayken dokun, patlat!','#2d6a4f',1.5);babble('amca','Karpuuuz! Kesmece karpuz!',true);}}}
+    if(!X.truck){if(n>=2&&!myBusy()){X.tCD-=dt;if(X.tCD<=0){const d=ch(.5)?1:-1;X.truck={x:d>0?-90:W+90,dir:d,st:'in',left:2+(di>=20?1:0),cd:.7};showBanner('KARPUZCU KADİR GELDİ!','Karpuzlar havadayken dokun, patlat!','#2d6a4f',1.5);babble('amca','Karpuuuz! Kesmece karpuz!',true);}}}
     else{const T=X.truck,stop=T.dir>0?W*.14:W*.86;
       if(T.st==='in'){T.x+=T.dir*160*dt;if((T.dir>0&&T.x>=stop)||(T.dir<0&&T.x<=stop)){T.x=stop;T.st='throw';}}
       else if(T.st==='throw'){T.cd-=dt;if(T.cd<=0){if(T.left<=0||!floors.length)T.st='out';else{T.left--;T.cd=Math.max(1.7,2.7-di*.02);throwMelon(T);}}}
-      else{T.x-=T.dir*180*dt;if(T.x<-130||T.x>W+130){X.truck=null;X.tCD=10+Math.random()*3;}}}}
-  if(k==='antalya'&&n>=2&&!hazBusy()){X.tourCD-=dt;if(X.tourCD<=0){X.tourCD=9+Math.random()*3;const cnt=1+(n>=6?1:0);for(let i=0;i<cnt;i++)arrows.push({kind:'turist',ext:1,x:W+30+i*40,wy:-14,hit:0,hp:1,spd:Math.min(130,50+n*4+di*.3),climb:0,c:['#ff6b6b','#4cc9f0','#ffd166','#06d6a0'][Math.floor(Math.random()*4)]});showBanner('TURİST KAFİLESİ!','Tepeye çıkmadan dokun, selfie çekmesinler!','#0096c7',1.4);}}
-  if(k==='bursa'&&n>=2){if(!X.gond){if(!hazBusy()&&PK.steamT<=0){X.gCD-=dt;if(X.gCD<=0){const d=ch(.5)?1:-1;X.gond={x:d>0?-60:W+60,dir:d,used:0};tone(660,.3,'sine',.05);popup('TELEFERİK GELİYOR!',camY+H*.3,'#d62828',20,1);}}}
-    else{const G=X.gond;G.x+=G.dir*(70+di*.6)*dt;if(G.x<-90||G.x>W+90){X.gond=null;X.gCD=9+Math.random()*3;}}}
+      else{T.x-=T.dir*180*dt;if(T.x<-130||T.x>W+130){X.truck=null;X.tCD=7+Math.random()*3;X.calm=2;}}}}
+  if(k==='antalya'&&n>=2&&!myBusy()&&!arrows.some(a=>a.kind==='turist'&&!a.hit)){X.tourCD-=dt;if(X.tourCD<=0){X.tourCD=8+Math.random()*3;const cnt=1+(n>=6?1:0);for(let i=0;i<cnt;i++)arrows.push({kind:'turist',ext:1,x:W+30+i*40,wy:-14,hit:0,hp:1,spd:Math.min(130,50+n*4+di*.3),climb:0,c:['#ff6b6b','#4cc9f0','#ffd166','#06d6a0'][Math.floor(Math.random()*4)]});showBanner('TURİST KAFİLESİ!','Tepeye çıkmadan dokun, selfie çekmesinler!','#0096c7',1.4);}}
+  if(k==='bursa'&&n>=2){if(!X.gond){if(!myBusy()&&PK.steamT<=0){X.gCD-=dt;if(X.gCD<=0){const d=ch(.5)?1:-1;X.gond={x:d>0?-60:W+60,dir:d,used:0};tone(660,.3,'sine',.05);popup('TELEFERİK GELİYOR!',camY+H*.3,'#d62828',20,1);}}}
+    else{const G=X.gond;G.x+=G.dir*(70+di*.6)*dt;if(G.x<-90||G.x>W+90){X.gond=null;X.gCD=9+Math.random()*3;X.calm=3;}}}
   if(k==='trabzon'&&n>=2){
-    if(X.horonT>0){X.horonT-=dt;X.beat+=dt;if(X.beat>=.5){X.beat-=.5;tone(90,.12,'sine',.25);noise(.08,'lowpass',400,.15);shake=Math.max(shake,2.5);X.pulse=1;}X.pulse=Math.max(0,X.pulse-dt*4);}
-    else if(!hazBusy()&&!X.laz){X.hCD-=dt;if(X.hCD<=0){X.hCD=8+Math.random()*4;
+    if(X.horonT>0){X.horonT-=dt;X.beat+=dt;if(X.beat>=.5){X.beat-=.5;tone(90,.12,'sine',.25);noise(.08,'lowpass',400,.15);shake=Math.max(shake,5);X.pulse=1;swayAmp=Math.min(FW*.5,swayAmp+FW*.035);quake=Math.max(quake||0,.5);}if(X.horonT<=0)X.calm=3;X.pulse=Math.max(0,X.pulse-dt*4);quake=X.horonT>0?Math.max(0,quake-dt*2.5):0;}
+    else if(!myBusy()&&!X.laz){X.hCD-=dt;if(X.hCD<=0){X.hCD=6+Math.random()*3;
       if(n>=3&&ch(.5)){X.laz=1;arrows.push({kind:'lazHook',ext:1,side:ch(.5)?1:-1,x:0,wy:0,prog:0,hit:0,hp:3,dur:Math.max(3.4,5.2-di*.03)});showBanner('LAZ MÜTEAHHİT GELDİ!','Kancaya 3 kere dokun, halatı kopar!','#264653',1.6);babble('patron','Uşağum bu arsa benum!',true);}
       else{X.horonT=6;X.beat=0;showBanner('HORON TEPİLİYOR!','Davulun vuruşunda kat koy: bonus!','#1d3557',1.4);babble('amca','Hadi uşaklar horona!',true);}}}}
   // ext oklar
@@ -2489,7 +2492,7 @@ function newPerks(dt){const k=cityKeyNow();if(!k||cine||winT||scene!=='play')ret
       if(a.wy<=-nn*FH+FH*.5){a.hit=2;flashFX=.9;swayAmp+=FW*.07;popup('Selfie flaşı! 📸',a.wy-40,'#0096c7',20,1);complain(['Bir de buradan!','Story atıyorum!','Excuse me, photo please!']);}}
     else if(a.kind==='lazHook'){a.prog+=dt/a.dur;const jx=a.side>0?W-26:26,jwy=camY+CRANE_Y+64,tx=nn?floorX(nn-1):W/2,twy=-nn*FH-8;a.jx=jx;a.jwy=jwy;
       const p1=Math.min(1,a.prog*2),p2=Math.max(0,a.prog*2-1);a.x=jx+(tx-jx)*p1;a.wy=jwy+(twy-jwy)*p2;
-      if(a.prog>=1){a.hit=2;X.laz=0;if(!knockTop('Laz müteahhit katı kaptı!',1))swayAmp+=FW*.12;babble('patron','Hee! Bu kat da benum!',true);}}}}
+      if(a.prog>=1){a.hit=2;X.laz=0;X.calm=3;if(!knockTop('Laz müteahhit katı kaptı!',1))swayAmp+=FW*.12;babble('patron','Hee! Bu kat da benum!',true);}}}}
 {const _pt=perkTick;perkTick=function(dt){_pt(dt);newPerks(dt);};}
 {const _pl=perkLand;perkLand=function(b,dx,perfect,wy){_pl(b,dx,perfect,wy);if(cityKeyNow()==='trabzon'&&X.horonT>0){if(X.beat<.13||X.beat>.37){addScore(40,wy);popup('RİTİMDE! +40',wy-70,'#1d3557',20,.9);}else{swayAmp+=FW*.05;popup('Ritim kaçtı!',wy-70,'#6c757d',16,.7);}}};}
 function drawTruck(T){const gy=Math.min(H-112,-camY);ctx.save();ctx.translate(T.x,gy);ctx.scale(T.dir,1);
@@ -2529,7 +2532,7 @@ function drawHoron(){const gy=Math.min(H-112,-camY),b=X.pulse;for(let i=0;i<6;i+
   for(const a of arrows){if(a.hit||!a.ext)continue;const ay=a.wy-camY,r=a.kind==='lazHook'?50:a.kind==='karpuzT'?46:40;if(Math.hypot(x-a.x,y-ay)<r){
     if(a.kind==='karpuzT'){a.hit=1;burst(a.x,a.wy,12,['#e63946','#2d6a4f'],260);sThud();stBump('karpuz');addScore(25,a.wy);if(a.gold){addCoins(5);popup('ALTIN KARPUZ! +5',a.wy-30,'#e9c46a',20,1);sGold();}else popup('Karpuz parçalandı!',a.wy-30,'#e63946',18,.9);return true;}
     if(a.kind==='turist'){a.hit=1;sGold();addScore(15,a.wy);popup('Turist indirildi!',a.wy-24,'#0096c7',16,.8);return true;}
-    if(a.kind==='lazHook'){a.hp--;sThud();burst(a.x,a.wy,8,['#adb5bd','#fff'],200);if(a.hp>0)return true;a.hit=1;X.laz=0;addScore(40,a.wy);popup('Halat koptu! Laz kaçtı',a.wy-30,'#264653',20,1);babble('patron','Bu sefer kurtardun!',true);return true;}}}
+    if(a.kind==='lazHook'){a.hp--;sThud();burst(a.x,a.wy,8,['#adb5bd','#fff'],200);if(a.hp>0)return true;a.hit=1;X.laz=0;X.calm=3;addScore(40,a.wy);popup('Halat koptu! Laz kaçtı',a.wy-30,'#264653',20,1);babble('patron','Bu sefer kurtardun!',true);return true;}}}
   return _at(x,y);};}
 /* --- yeni şehir siluetleri --- */
 function sArches(x,b,n,aw,ah,s){FR(x,b-ah*s,n*aw*s,ah*.35*s);const col=ctx.fillStyle;for(let i=0;i<n;i++){const ax=x+(i+.5)*aw*s;FR(ax-aw*.5*s,b-ah*s,aw*.14*s,ah*s);FR(ax+aw*.36*s,b-ah*s,aw*.14*s,ah*s);ctx.beginPath();ctx.arc(ax,b-ah*.62*s,aw*.4*s,Math.PI,0);ctx.lineTo(ax+aw*.4*s,b-ah*.66*s);ctx.lineTo(ax-aw*.4*s,b-ah*.66*s);ctx.fill();}ctx.fillStyle=col;}
