@@ -41,7 +41,7 @@
       } catch (e) {}
     });
     // uygulama arka plana gidince oyunu duraklat
-    P.App.addListener('pause', () => { try { if (scene === 'play') paused = true; if (AC && AC.state === 'running') AC.suspend(); } catch (e) {} });
+    P.App.addListener('pause', () => { try { if (scene === 'play' && !window.KD_adShowing) paused = true; if (AC && AC.state === 'running') AC.suspend(); } catch (e) {} });
     P.App.addListener('resume', () => { try { if (AC && AC.state !== 'running') AC.resume(); } catch (e) {} });
   }
   if (P.StatusBar) { P.StatusBar.hide().catch(() => {}); }
@@ -52,7 +52,18 @@
   if (AdMob) {
     const rewardedId = TEST_MODE ? AD_IDS.testRewarded : AD_IDS.rewarded;
     const interId = TEST_MODE ? AD_IDS.testInterstitial : AD_IDS.interstitial;
-    let ready = false;
+    let ready = false, interLoaded = false, interLoading = false;
+    const adStart = () => { window.KD_adShowing = true; duckSafe(true); };
+    const adEnd = () => { setTimeout(() => { window.KD_adShowing = false; }, 800); duckSafe(false); try { if (AC && AC.state !== 'running') AC.resume(); } catch (e) {} };
+    function loadInter() {
+      if (interLoaded || interLoading) return;
+      interLoading = true;
+      AdMob.prepareInterstitial({ adId: interId })
+        .then(() => { interLoaded = true; interLoading = false; })
+        .catch(() => { interLoading = false; setTimeout(loadInter, 30000); });
+    }
+    try { AdMob.addListener('interstitialAdDismissed', () => { adEnd(); loadInter(); }); } catch (e) {}
+    try { AdMob.addListener('interstitialAdFailedToShow', () => { adEnd(); loadInter(); }); } catch (e) {}
 
     (async () => {
       try {
@@ -67,22 +78,23 @@
           if (need) window.KD_privacy = { open: () => (AdMob.showPrivacyOptionsForm ? AdMob.showPrivacyOptionsForm() : AdMob.showConsentForm()).catch(() => {}) };
         } catch (e) {}
         ready = true;
+        loadInter();
       } catch (e) { console.log('AdMob init hatası', e); }
     })();
 
     // Oyundaki "reklam izle" butonları bu fonksiyonu çağırır
     window.showAd = function (label, reward) {
       if (!ready) { banner('Reklam hazır değil', 'Birkaç saniye sonra tekrar dene'); return; }
-      duckSafe(true);
+      adStart();
       let rewarded = false;
       const sub = AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; });
       AdMob.prepareRewardVideoAd({ adId: rewardedId })
         .then(() => AdMob.showRewardVideoAd())
         .then(item => {
-          duckSafe(false);
+          adEnd();
           if (rewarded || item) { try { sGold(); } catch (e) {} reward && reward(); }
         })
-        .catch(() => { duckSafe(false); banner('Reklam yüklenemedi', 'İnternetini kontrol edip tekrar dene'); })
+        .catch(() => { adEnd(); banner('Reklam yüklenemedi', 'İnternetini kontrol edip tekrar dene'); })
         .finally(() => { try { sub.then ? sub.then(s => s.remove()) : sub.remove(); } catch (e) {} });
     };
 
@@ -92,8 +104,11 @@
     window.KD_hooks.levelEnd = function () {
       try { if (noAds) return; } catch (e) {}
       ends++;
-      if (!ready || ends % INTERSTITIAL_EVERY !== 0) return;
-      AdMob.prepareInterstitial({ adId: interId }).then(() => AdMob.showInterstitial()).catch(() => {});
+      if (!ready || ends < INTERSTITIAL_EVERY) return;
+      if (!interLoaded) { loadInter(); return; } // hazır değilse bu sefer gösterme, sonraki bölüm sonunu bekle
+      ends = 0; interLoaded = false;
+      adStart();
+      AdMob.showInterstitial().catch(() => { adEnd(); loadInter(); });
     };
   }
 
